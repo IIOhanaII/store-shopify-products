@@ -14,16 +14,13 @@ import (
     "github.com/joho/godotenv"
 )
 
-const (
-    host     = "localhost"
-    port     = 5432
-    user     = "postgres"
-    dbname   = "postgres"
-)
-
 func connectDB() (*sql.DB, error) {
-    psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-        host, port, user, os.Getenv("POSTGRES_PASSWORD"), dbname)
+    psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+        os.Getenv("POSTGRES_HOST"), 
+		os.Getenv("POSTGRES_PORT"), 
+		os.Getenv("POSTGRES_USER"), 
+		os.Getenv("POSTGRES_PASSWORD"), 
+		os.Getenv("POSTGRES_DBNAME"))
     
     db, err := sql.Open("postgres", psqlInfo)
     if err != nil {
@@ -53,6 +50,7 @@ type Product struct {
 }
 
 type Variant struct {
+    ID               int64  `json:"id"`
     Price            string `json:"price"`
     InventoryQuantity int   `json:"inventory_quantity"`
 }
@@ -76,12 +74,12 @@ func getShopifyProducts() ([]Product, error) {
         return nil, err
     }
     defer resp.Body.Close()
-
+    
     // Read the response body
     // body, err := ioutil.ReadAll(resp.Body)
     // if err!= nil {
     //     fmt.Println(err)
-    //     return
+    //     return nil, err
     // }
 
     // Display the response body
@@ -100,33 +98,34 @@ func getShopifyProducts() ([]Product, error) {
 func insertProduct(db *sql.DB, product Product) error {
     // Insert product data
     query := `
-        INSERT INTO products (title, body_html, vendor, product_type, created_at, updated_at, handle, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id;
+        INSERT INTO products (id, title, body_html, vendor, product_type, created_at, updated_at, handle, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ON CONFLICT (id) DO NOTHING;
     `
-    var productId int
-    err := db.QueryRow(query, product.Title, product.BodyHTML, product.Vendor, product.ProductType, product.CreatedAt, product.UpdatedAt, product.Handle, product.Status).Scan(&productId)
+    _, err := db.Exec(query, product.ID, product.Title, product.BodyHTML, product.Vendor, product.ProductType, product.CreatedAt, product.UpdatedAt, product.Handle, product.Status)
     if err!= nil {
         return err
     }
 
     // Insert variants data
     query = `
-        INSERT INTO variants (product_id, price, inventory_quantity)
-        VALUES ($1, $2, $3);
+        INSERT INTO variants (product_id, id, price, inventory_quantity)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (id) DO NOTHING;
     `
     for _, variant := range product.Variants {
-        _, err := db.Exec(query, productId, variant.Price, variant.InventoryQuantity)
+        _, err := db.Exec(query, product.ID, variant.ID, variant.Price, variant.InventoryQuantity)
         if err!= nil {
             return err
         }
     }
+
     return nil
 }
 
 func main() {
     err := godotenv.Load()
-    if err!= nil {
+    if err != nil {
         log.Fatal(err)
     }
 
