@@ -110,7 +110,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Related Projects
 
 - [Update Shopify Products](https://github.com/IIOhanaII/update-shopify-products): Use this project to send your modified Shopify product data back to the store after making bulk changes.
-
----
-
-Feel free to modify this as needed!
