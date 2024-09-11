@@ -14,6 +14,26 @@ import (
     "github.com/joho/godotenv"
 )
 
+// Data structure
+type Product struct {
+    ID             int64     `json:"id"`
+    Title          string    `json:"title"`
+    BodyHTML       string    `json:"body_html"`
+    Vendor         string    `json:"vendor"`
+    ProductType    string    `json:"product_type"`
+    CreatedAt      time.Time `json:"created_at"`
+    UpdatedAt      time.Time `json:"updated_at"`
+    Handle         string    `json:"handle"`
+    Status         string    `json:"status"`
+    Variants       []Variant `json:"variants"`
+}
+
+type Variant struct {
+    ID               int64  `json:"id"`
+    Price            string `json:"price"`
+    InventoryQuantity int   `json:"inventory_quantity"`
+}
+
 func connectDB() (*sql.DB, error) {
     psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
         os.Getenv("POSTGRES_HOST"), 
@@ -34,25 +54,6 @@ func connectDB() (*sql.DB, error) {
 
     fmt.Println("Successfully connected to PostgreSQL!")
     return db, nil
-}
-
-type Product struct {
-    ID             int64     `json:"id"`
-    Title          string    `json:"title"`
-    BodyHTML       string    `json:"body_html"`
-    Vendor         string    `json:"vendor"`
-    ProductType    string    `json:"product_type"`
-    CreatedAt      time.Time `json:"created_at"`
-    UpdatedAt      time.Time `json:"updated_at"`
-    Handle         string    `json:"handle"`
-    Status         string    `json:"status"`
-    Variants       []Variant `json:"variants"`
-}
-
-type Variant struct {
-    ID               int64  `json:"id"`
-    Price            string `json:"price"`
-    InventoryQuantity int   `json:"inventory_quantity"`
 }
 
 func getShopifyProducts() ([]Product, error) {
