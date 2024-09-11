@@ -7,7 +7,6 @@ import (
     "log"
 	"net/http"
     // "io/ioutil"
-	"time"
     "os"
     
 	_ "github.com/lib/pq"
@@ -21,17 +20,13 @@ type Product struct {
     BodyHTML       string    `json:"body_html"`
     Vendor         string    `json:"vendor"`
     ProductType    string    `json:"product_type"`
-    CreatedAt      time.Time `json:"created_at"`
-    UpdatedAt      time.Time `json:"updated_at"`
-    Handle         string    `json:"handle"`
-    Status         string    `json:"status"`
     Variants       []Variant `json:"variants"`
 }
 
 type Variant struct {
-    ID               int64  `json:"id"`
-    Price            string `json:"price"`
-    InventoryQuantity int   `json:"inventory_quantity"`
+    ID                int64  `json:"id"`
+    Price             string `json:"price"`
+    InventoryQuantity int    `json:"inventory_quantity"`
 }
 
 func connectDB() (*sql.DB, error) {
@@ -99,11 +94,11 @@ func getShopifyProducts() ([]Product, error) {
 func insertProduct(db *sql.DB, product Product) error {
     // Insert product data
     query := `
-        INSERT INTO products (id, title, body_html, vendor, product_type, created_at, updated_at, handle, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO products (id, title, body_html, vendor, product_type)
+        VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (id) DO NOTHING;
     `
-    _, err := db.Exec(query, product.ID, product.Title, product.BodyHTML, product.Vendor, product.ProductType, product.CreatedAt, product.UpdatedAt, product.Handle, product.Status)
+    _, err := db.Exec(query, product.ID, product.Title, product.BodyHTML, product.Vendor, product.ProductType)
     if err!= nil {
         return err
     }
@@ -142,7 +137,6 @@ func main() {
     }
 
     for _, product := range products {
-        // fmt.Printf("Product: %s\n", product.Title)
         err := insertProduct(db, product)
         if err != nil {
             log.Printf("Error inserting product %s: %v", product.Title, err)
